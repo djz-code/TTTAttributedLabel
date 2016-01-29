@@ -864,59 +864,103 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
         CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
 
+        CGFloat runAscent = 0.0f;
+        CGFloat runDescent = 0.0f;
+
+        // BRUTE FORCE GET THE LINE HEIGHT...we doin liiines
+        
+        NSDictionary *attributes;
+        
+        CGColorRef strokeColor;
+        CGColorRef fillColor;
+        UIEdgeInsets fillPadding;
+        CGFloat cornerRadius;
+        CGFloat lineWidth;
         for (id glyphRun in (__bridge NSArray *)CTLineGetGlyphRuns((__bridge CTLineRef)line)) {
-            NSDictionary *attributes = (__bridge NSDictionary *)CTRunGetAttributes((__bridge CTRunRef) glyphRun);
-            CGColorRef strokeColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundStrokeColorAttributeName]);
-            CGColorRef fillColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundFillColorAttributeName]);
-            UIEdgeInsets fillPadding = [[attributes objectForKey:kTTTBackgroundFillPaddingAttributeName] UIEdgeInsetsValue];
-            CGFloat cornerRadius = [[attributes objectForKey:kTTTBackgroundCornerRadiusAttributeName] floatValue];
-            CGFloat lineWidth = [[attributes objectForKey:kTTTBackgroundLineWidthAttributeName] floatValue];
-
-            if (strokeColor || fillColor) {
-                CGRect runBounds = CGRectZero;
-                CGFloat runAscent = 0.0f;
-                CGFloat runDescent = 0.0f;
-
-                runBounds.size.width = (CGFloat)CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL) + fillPadding.left + fillPadding.right;
-                runBounds.size.height = runAscent + runDescent + fillPadding.top + fillPadding.bottom;
-
-                CGFloat xOffset = 0.0f;
-                CFRange glyphRange = CTRunGetStringRange((__bridge CTRunRef)glyphRun);
-                switch (CTRunGetStatus((__bridge CTRunRef)glyphRun)) {
-                    case kCTRunStatusRightToLeft:
-                        xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, glyphRange.location + glyphRange.length, NULL);
-                        break;
-                    default:
-                        xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, glyphRange.location, NULL);
-                        break;
-                }
-
-                runBounds.origin.x = origins[lineIndex].x + rect.origin.x + xOffset - fillPadding.left - rect.origin.x;
-                runBounds.origin.y = origins[lineIndex].y + rect.origin.y - fillPadding.bottom - rect.origin.y;
-                runBounds.origin.y -= runDescent;
-
-                // Don't draw higlightedLinkBackground too far to the right
-                if (CGRectGetWidth(runBounds) > width) {
-                    runBounds.size.width = width;
-                }
-
-                CGPathRef path = [[UIBezierPath bezierPathWithRoundedRect:CGRectInset(UIEdgeInsetsInsetRect(runBounds, self.linkBackgroundEdgeInset), lineWidth, lineWidth) cornerRadius:cornerRadius] CGPath];
-
-                CGContextSetLineJoin(c, kCGLineJoinRound);
-
-                if (fillColor) {
-                    CGContextSetFillColorWithColor(c, fillColor);
-                    CGContextAddPath(c, path);
-                    CGContextFillPath(c);
-                }
-
-                if (strokeColor) {
-                    CGContextSetStrokeColorWithColor(c, strokeColor);
-                    CGContextAddPath(c, path);
-                    CGContextStrokePath(c);
-                }
-            }
+            CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
+            attributes = (__bridge NSDictionary *)CTRunGetAttributes((__bridge CTRunRef) glyphRun);
+            
+            
+            
+            strokeColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundStrokeColorAttributeName]);
+            fillColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundFillColorAttributeName]);
+            fillPadding = [[attributes objectForKey:kTTTBackgroundFillPaddingAttributeName] UIEdgeInsetsValue];
+            cornerRadius = [[attributes objectForKey:kTTTBackgroundCornerRadiusAttributeName] floatValue];
+            lineWidth = [[attributes objectForKey:kTTTBackgroundLineWidthAttributeName] floatValue];
         }
+        CGRect runBounds = CGRectZero;
+        runBounds.size.width = width;
+        runBounds.size.height = runAscent + runDescent;
+        runBounds.origin.x = origins[lineIndex].x - fillPadding.left;
+        runBounds.origin.y = origins[lineIndex].y + fillPadding.bottom - runDescent;
+        
+        
+        CGPathRef path = [[UIBezierPath bezierPathWithRoundedRect:CGRectInset(UIEdgeInsetsInsetRect(runBounds, self.linkBackgroundEdgeInset), lineWidth, lineWidth) cornerRadius:cornerRadius] CGPath];
+        
+        CGContextSetLineJoin(c, kCGLineJoinRound);
+        
+        if (fillColor) {
+            CGContextSetFillColorWithColor(c, fillColor);
+            CGContextAddPath(c, path);
+            CGContextFillPath(c);
+        }
+        
+        if (strokeColor) {
+            CGContextSetStrokeColorWithColor(c, strokeColor);
+            CGContextAddPath(c, path);
+            CGContextStrokePath(c);
+        }
+        
+        
+        
+        
+        
+        
+//        
+//        // MARK:
+//        for (id glyphRun in (__bridge NSArray *)CTLineGetGlyphRuns((__bridge CTLineRef)line)) {
+//            
+//            
+//            NSDictionary *attributes = (__bridge NSDictionary *)CTRunGetAttributes((__bridge CTRunRef) glyphRun);
+//            
+//            
+//            
+//            CGColorRef strokeColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundStrokeColorAttributeName]);
+//            CGColorRef fillColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundFillColorAttributeName]);
+//            UIEdgeInsets fillPadding = [[attributes objectForKey:kTTTBackgroundFillPaddingAttributeName] UIEdgeInsetsValue];
+//            CGFloat cornerRadius = [[attributes objectForKey:kTTTBackgroundCornerRadiusAttributeName] floatValue];
+//            CGFloat lineWidth = [[attributes objectForKey:kTTTBackgroundLineWidthAttributeName] floatValue];
+//
+//            if (strokeColor || fillColor) {
+//                CGRect runBounds = CGRectZero;
+//                
+//                runBounds.size.width = (CGFloat)CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), NULL, NULL, NULL) + fillPadding.left + fillPadding.right;
+//                runBounds.size.height = runAscent + runDescent + fillPadding.top + fillPadding.bottom;
+//
+//                CGFloat xOffset = 0.0f;
+//                CFRange glyphRange = CTRunGetStringRange((__bridge CTRunRef)glyphRun);
+//                switch (CTRunGetStatus((__bridge CTRunRef)glyphRun)) {
+//                    case kCTRunStatusRightToLeft:
+//                        xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, glyphRange.location + glyphRange.length, NULL);
+//                        break;
+//                    default:
+//                        xOffset = CTLineGetOffsetForStringIndex((__bridge CTLineRef)line, glyphRange.location, NULL);
+//                        break;
+//                }
+//
+//                runBounds.origin.x = MAX(lastXPosition, origins[lineIndex].x  + xOffset - fillPadding.left);
+//                runBounds.origin.y = origins[lineIndex].y + fillPadding.bottom - runDescent;
+//                
+//                // Don't draw higlightedLinkBackground too far to the right
+//                if (CGRectGetWidth(runBounds) > width) {
+//                    runBounds.size.width = width;
+//                }
+//                
+//                lastXPosition = runBounds.origin.x + runBounds.size.width;
+//                
+//
+//            }
+//        }
 
         lineIndex++;
     }
