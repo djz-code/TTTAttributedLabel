@@ -866,9 +866,6 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
 
         CGFloat runAscent = 0.0f;
         CGFloat runDescent = 0.0f;
-
-        // BRUTE FORCE GET THE LINE HEIGHT...we doin liiines
-        
         NSDictionary *attributes;
         
         CGColorRef strokeColor;
@@ -889,11 +886,12 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
             lineWidth = [[attributes objectForKey:kTTTBackgroundLineWidthAttributeName] floatValue];
         }
         CGRect runBounds = CGRectZero;
-        runBounds.size.width = width;
-        runBounds.size.height = runAscent + runDescent;
+        runBounds.size.width = width + fillPadding.right + fillPadding.left;
+        runBounds.size.height = runAscent + runDescent + fillPadding.bottom + fillPadding.top;
         runBounds.origin.x = origins[lineIndex].x - fillPadding.left;
-        runBounds.origin.y = origins[lineIndex].y + fillPadding.bottom - runDescent;
         
+        runBounds.origin.y = origins[lineIndex].y - fillPadding.top - runDescent;
+    
         
         CGPathRef path = [[UIBezierPath bezierPathWithRoundedRect:CGRectInset(UIEdgeInsetsInsetRect(runBounds, self.linkBackgroundEdgeInset), lineWidth, lineWidth) cornerRadius:cornerRadius] CGPath];
         
@@ -911,7 +909,8 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
             CGContextStrokePath(c);
         }
         
-        
+        lineIndex++;
+
         
         
         
@@ -962,7 +961,6 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
 //            }
 //        }
 
-        lineIndex++;
     }
 }
 
@@ -974,6 +972,7 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
     CGPoint origins[[lines count]];
     CTFrameGetLineOrigins(frame, CFRangeMake(0, 0), origins);
 
+    CGFloat lastLineBottomY = 0;
     CFIndex lineIndex = 0;
     for (id line in lines) {
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
