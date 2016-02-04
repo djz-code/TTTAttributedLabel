@@ -864,8 +864,7 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
         CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
 
-        CGFloat runAscent = 0.0f;
-        CGFloat runDescent = 0.0f;
+        
         NSDictionary *attributes;
         
         CGColorRef strokeColor;
@@ -874,7 +873,7 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         CGFloat cornerRadius;
         CGFloat lineWidth;
         for (id glyphRun in (__bridge NSArray *)CTLineGetGlyphRuns((__bridge CTLineRef)line)) {
-            CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), &runAscent, &runDescent, NULL);
+            CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), NULL, NULL, NULL);
             attributes = (__bridge NSDictionary *)CTRunGetAttributes((__bridge CTRunRef) glyphRun);
             
             
@@ -886,11 +885,11 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
             lineWidth = [[attributes objectForKey:kTTTBackgroundLineWidthAttributeName] floatValue];
         }
         CGRect runBounds = CGRectZero;
-        runBounds.size.width = width + fillPadding.right + fillPadding.left;
-        runBounds.size.height = runAscent + runDescent + fillPadding.bottom + fillPadding.top;
+        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line);
+        runBounds.size.height = ascent + descent + fillPadding.bottom + fillPadding.top;
         runBounds.origin.x = origins[lineIndex].x - fillPadding.left;
         
-        runBounds.origin.y = origins[lineIndex].y - fillPadding.top - runDescent;
+        runBounds.origin.y = origins[lineIndex].y - fillPadding.top - descent;
     
         
         CGPathRef path = [[UIBezierPath bezierPathWithRoundedRect:CGRectInset(UIEdgeInsetsInsetRect(runBounds, self.linkBackgroundEdgeInset), lineWidth, lineWidth) cornerRadius:cornerRadius] CGPath];
