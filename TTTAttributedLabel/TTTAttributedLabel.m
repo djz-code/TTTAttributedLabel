@@ -861,10 +861,6 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
 
     CFIndex lineIndex = 0;
     for (id line in lines) {
-        CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
-        CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
-
-        
         NSDictionary *attributes;
         
         CGColorRef strokeColor;
@@ -875,19 +871,28 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         for (id glyphRun in (__bridge NSArray *)CTLineGetGlyphRuns((__bridge CTLineRef)line)) {
             CTRunGetTypographicBounds((__bridge CTRunRef)glyphRun, CFRangeMake(0, 0), NULL, NULL, NULL);
             attributes = (__bridge NSDictionary *)CTRunGetAttributes((__bridge CTRunRef) glyphRun);
-            
-            
-            
             strokeColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundStrokeColorAttributeName]);
             fillColor = CGColorRefFromColor([attributes objectForKey:kTTTBackgroundFillColorAttributeName]);
             fillPadding = [[attributes objectForKey:kTTTBackgroundFillPaddingAttributeName] UIEdgeInsetsValue];
             cornerRadius = [[attributes objectForKey:kTTTBackgroundCornerRadiusAttributeName] floatValue];
             lineWidth = [[attributes objectForKey:kTTTBackgroundLineWidthAttributeName] floatValue];
         }
+        CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
+        CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
+        
         CGRect runBounds = CGRectZero;
+        
         runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line);
         runBounds.size.height = ascent + descent + fillPadding.bottom + fillPadding.top;
-        runBounds.origin.x = origins[lineIndex].x - fillPadding.left;
+
+        float flush = 0.0;
+        switch (self.textAlignment) {
+            case NSTextAlignmentCenter: flush = 0.5;    break;
+            case NSTextAlignmentRight:  flush = 1;      break;
+            case NSTextAlignmentLeft:
+            default:                    flush = 0;      break;
+        }
+        runBounds.origin.x = origins[lineIndex].x + CTLineGetPenOffsetForFlush((__bridge CTLineRef)line, flush, self.bounds.size.width) - fillPadding.left;
         
         runBounds.origin.y = origins[lineIndex].y - fillPadding.top - descent;
     
