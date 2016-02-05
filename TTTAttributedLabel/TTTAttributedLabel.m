@@ -880,19 +880,24 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         CGFloat ascent = 0.0f, descent = 0.0f, leading = 0.0f;
         CGFloat width = (CGFloat)CTLineGetTypographicBounds((__bridge CTLineRef)line, &ascent, &descent, &leading) ;
         
-        CGRect runBounds = CGRectZero;
-        
-        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line);
-        runBounds.size.height = ascent + descent + fillPadding.bottom + fillPadding.top;
 
         float flush = 0.0;
+        float extraXOffset = 0.0;
         switch (self.textAlignment) {
             case NSTextAlignmentCenter: flush = 0.5;    break;
             case NSTextAlignmentRight:  flush = 1;      break;
             case NSTextAlignmentLeft:
-            default:                    flush = 0;      break;
+            default:
+                flush = 0;
+                extraXOffset = self.textInsets.left;
+                break;
         }
-        runBounds.origin.x = origins[lineIndex].x + CTLineGetPenOffsetForFlush((__bridge CTLineRef)line, flush, self.bounds.size.width) - fillPadding.left;
+        CGRect runBounds = CGRectZero;
+        
+        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line) + extraXOffset;
+        runBounds.size.height = ascent + descent + fillPadding.bottom + fillPadding.top;
+
+        runBounds.origin.x = origins[lineIndex].x + CTLineGetPenOffsetForFlush((__bridge CTLineRef)line, flush, self.bounds.size.width) - fillPadding.left - extraXOffset;
         
         runBounds.origin.y = origins[lineIndex].y - fillPadding.top - descent;
     
