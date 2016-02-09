@@ -882,23 +882,17 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         
 
         float flush = 0.0;
-        float extraXOffset = 0.0;
         switch (self.textAlignment) {
             case NSTextAlignmentCenter: flush = 0.5;    break;
             case NSTextAlignmentRight:  flush = 1;      break;
-            case NSTextAlignmentLeft:
-            default:
-                flush = 0;
-                extraXOffset = self.textInsets.left;
-                break;
+            case NSTextAlignmentLeft:   flush = 0;      break;
+            default:                    flush = 0;      break;
         }
+        
         CGRect runBounds = CGRectZero;
-        
-        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line) + extraXOffset;
+        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line) + self.textInsets.left;
         runBounds.size.height = ascent + descent + fillPadding.bottom + fillPadding.top;
-
-        runBounds.origin.x = origins[lineIndex].x + CTLineGetPenOffsetForFlush((__bridge CTLineRef)line, flush, self.bounds.size.width) - fillPadding.left - extraXOffset;
-        
+        runBounds.origin.x = origins[lineIndex].x + CTLineGetPenOffsetForFlush((__bridge CTLineRef)line, flush, self.bounds.size.width) - fillPadding.left - self.textInsets.left;
         runBounds.origin.y = origins[lineIndex].y - fillPadding.top - descent;
     
         
