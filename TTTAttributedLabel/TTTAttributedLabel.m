@@ -891,11 +891,14 @@ static inline CGSize CTFramesetterSuggestFrameSizeForAttributedStringWithConstra
         
         CGRect runBounds = CGRectZero;
         
-        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line) + self.textInsets.left;
-        runBounds.size.height = MIN(ascent + descent + fillPadding.bottom + fillPadding.top, self.maximumLineHeight + fillPadding.bottom + fillPadding.top);
+        runBounds.size.width = width + fillPadding.right + fillPadding.left + (CGFloat)CTLineGetTrailingWhitespaceWidth((__bridge CTLineRef)line) + self.textInsets.left; //  + self.textInsets.right; how come this seems to wide with the right insets
+        // adjust for strange characters like emoji's
+        runBounds.size.height = MIN(self.maximumLineHeight + fillPadding.bottom + fillPadding.top, ascent + descent + fillPadding.bottom + fillPadding.top);
+        
+        // adjust for alignment using the flush calculated above
         runBounds.origin.x = origins[lineIndex].x + CTLineGetPenOffsetForFlush((__bridge CTLineRef)line, flush, self.bounds.size.width) - fillPadding.left - self.textInsets.left;
-        runBounds.origin.y = origins[lineIndex].y - fillPadding.top - descent;
-    
+        runBounds.origin.y = origins[lineIndex].y - fillPadding.bottom - descent;
+
         
         CGPathRef path = [[UIBezierPath bezierPathWithRoundedRect:CGRectInset(UIEdgeInsetsInsetRect(runBounds, self.linkBackgroundEdgeInset), lineWidth, lineWidth) cornerRadius:cornerRadius] CGPath];
         
